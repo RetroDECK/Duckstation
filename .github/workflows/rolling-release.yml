@@ -19,179 +19,179 @@ on:
   workflow_dispatch:
 
 jobs:
-  windows-build:
-    runs-on: windows-2022
-    timeout-minutes: 120
-    steps:
-    - uses: actions/checkout@v4.1.6
-      with:
-        fetch-depth: 0
+  # windows-build:
+  #   runs-on: windows-2022
+  #   timeout-minutes: 120
+  #   steps:
+  #   - uses: actions/checkout@v4.1.6
+  #     with:
+  #       fetch-depth: 0
 
-    - name: Cache Dependencies
-      id: cache-deps
-      uses: actions/cache@v4.0.2
-      with:
-        path: |
-          dep/msvc/deps-arm64
-          dep/msvc/deps-x64
-        key: deps ${{ hashFiles('scripts/deps/build-dependencies-windows-arm64.bat', 'scripts/deps/build-dependencies-windows-x64.bat') }}
+  #   - name: Cache Dependencies
+  #     id: cache-deps
+  #     uses: actions/cache@v4.0.2
+  #     with:
+  #       path: |
+  #         dep/msvc/deps-arm64
+  #         dep/msvc/deps-x64
+  #       key: deps ${{ hashFiles('scripts/deps/build-dependencies-windows-arm64.bat', 'scripts/deps/build-dependencies-windows-x64.bat') }}
 
-    - name: Build X64 Dependencies
-      if: steps.cache-deps.outputs.cache-hit != 'true'
-      env:
-        DEBUG: 0
-      run: scripts/deps/build-dependencies-windows-x64.bat
+  #   - name: Build X64 Dependencies
+  #     if: steps.cache-deps.outputs.cache-hit != 'true'
+  #     env:
+  #       DEBUG: 0
+  #     run: scripts/deps/build-dependencies-windows-x64.bat
 
-    - name: Build ARM64 Dependencies
-      if: steps.cache-deps.outputs.cache-hit != 'true'
-      env:
-        DEBUG: 0
-      run: scripts/deps/build-dependencies-windows-arm64.bat
+  #   - name: Build ARM64 Dependencies
+  #     if: steps.cache-deps.outputs.cache-hit != 'true'
+  #     env:
+  #       DEBUG: 0
+  #     run: scripts/deps/build-dependencies-windows-arm64.bat
 
-    - name: Initialize build tag
-      shell: cmd
-      run: |
-        echo #pragma once > src/scmversion/tag.h
+  #   - name: Initialize build tag
+  #     shell: cmd
+  #     run: |
+  #       echo #pragma once > src/scmversion/tag.h
 
-    - name: Tag as preview build
-      if: github.ref == 'refs/heads/master'
-      shell: cmd
-      run: |
-        echo #define SCM_RELEASE_ASSET "duckstation-windows-x64-release.zip" >> src/scmversion/tag.h
-        echo #define SCM_RELEASE_TAGS {"latest", "preview"} >> src/scmversion/tag.h
-        echo #define SCM_RELEASE_TAG "preview" >> src/scmversion/tag.h
+  #   - name: Tag as preview build
+  #     if: github.ref == 'refs/heads/master'
+  #     shell: cmd
+  #     run: |
+  #       echo #define SCM_RELEASE_ASSET "duckstation-windows-x64-release.zip" >> src/scmversion/tag.h
+  #       echo #define SCM_RELEASE_TAGS {"latest", "preview"} >> src/scmversion/tag.h
+  #       echo #define SCM_RELEASE_TAG "preview" >> src/scmversion/tag.h
 
-    - name: Tag as dev build
-      if: github.ref == 'refs/heads/dev'
-      shell: cmd
-      run: |
-        echo #define SCM_RELEASE_ASSET "duckstation-windows-x64-release.zip" >> src/scmversion/tag.h
-        echo #define SCM_RELEASE_TAGS {"latest", "preview"} >> src/scmversion/tag.h
-        echo #define SCM_RELEASE_TAG "latest" >> src/scmversion/tag.h
+  #   - name: Tag as dev build
+  #     if: github.ref == 'refs/heads/dev'
+  #     shell: cmd
+  #     run: |
+  #       echo #define SCM_RELEASE_ASSET "duckstation-windows-x64-release.zip" >> src/scmversion/tag.h
+  #       echo #define SCM_RELEASE_TAGS {"latest", "preview"} >> src/scmversion/tag.h
+  #       echo #define SCM_RELEASE_TAG "latest" >> src/scmversion/tag.h
 
-    - name: Update RC version fields
-      shell: cmd
-      run: |
-        cd src\scmversion
-        call update_rc_version.bat
-        cd ..\..
-        git update-index --assume-unchanged src/duckstation-qt/duckstation-qt.rc
+  #   - name: Update RC version fields
+  #     shell: cmd
+  #     run: |
+  #       cd src\scmversion
+  #       call update_rc_version.bat
+  #       cd ..\..
+  #       git update-index --assume-unchanged src/duckstation-qt/duckstation-qt.rc
 
-    - name: Compile x64 release build
-      shell: cmd
-      run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-        msbuild duckstation.sln -t:Build -p:Platform=x64;Configuration=ReleaseLTCG-Clang
+  #   - name: Compile x64 release build
+  #     shell: cmd
+  #     run: |
+  #       call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+  #       msbuild duckstation.sln -t:Build -p:Platform=x64;Configuration=ReleaseLTCG-Clang
 
-    - name: Create x64 symbols archive
-      shell: cmd
-      run: |
-        "C:\Program Files\7-Zip\7z.exe" a -r duckstation-windows-x64-release-symbols.zip ./bin/x64/*.pdb
+  #   - name: Create x64 symbols archive
+  #     shell: cmd
+  #     run: |
+  #       "C:\Program Files\7-Zip\7z.exe" a -r duckstation-windows-x64-release-symbols.zip ./bin/x64/*.pdb
 
-    - name: Remove extra bloat before archiving
-      shell: cmd
-      run: |
-        del /Q bin\x64\*.pdb bin\x64\*.exp bin\x64\*.lib bin\x64\*.iobj bin\x64\*.ipdb bin\x64\common-tests*
-        rename bin\x64\updater-x64-ReleaseLTCG.exe updater.exe
+  #   - name: Remove extra bloat before archiving
+  #     shell: cmd
+  #     run: |
+  #       del /Q bin\x64\*.pdb bin\x64\*.exp bin\x64\*.lib bin\x64\*.iobj bin\x64\*.ipdb bin\x64\common-tests*
+  #       rename bin\x64\updater-x64-ReleaseLTCG.exe updater.exe
 
-    - name: Create x64 release archive
-      shell: cmd
-      run: |
-        "C:\Program Files\7-Zip\7z.exe" a -r duckstation-windows-x64-release.zip ./bin/x64/*
+  #   - name: Create x64 release archive
+  #     shell: cmd
+  #     run: |
+  #       "C:\Program Files\7-Zip\7z.exe" a -r duckstation-windows-x64-release.zip ./bin/x64/*
 
-    - name: Upload x64 release artifact
-      uses: actions/upload-artifact@v4.3.3
-      with:
-        name: "windows"
-        path: "duckstation-windows-x64-release*.zip"
+  #   - name: Upload x64 release artifact
+  #     uses: actions/upload-artifact@v4.3.3
+  #     with:
+  #       name: "windows"
+  #       path: "duckstation-windows-x64-release*.zip"
 
 
-  windows-arm64-build:
-    runs-on: windows-2022
-    timeout-minutes: 120
-    steps:
-    - uses: actions/checkout@v4.1.6
-      with:
-        fetch-depth: 0
-        submodules: true
+  # windows-arm64-build:
+  #   runs-on: windows-2022
+  #   timeout-minutes: 120
+  #   steps:
+  #   - uses: actions/checkout@v4.1.6
+  #     with:
+  #       fetch-depth: 0
+  #       submodules: true
 
-    - name: Cache Dependencies
-      id: cache-deps
-      uses: actions/cache@v4.0.2
-      with:
-        path: |
-          dep/msvc/deps-arm64
-          dep/msvc/deps-x64
-        key: deps ${{ hashFiles('scripts/deps/build-dependencies-windows-arm64.bat', 'scripts/deps/build-dependencies-windows-x64.bat') }}
+  #   - name: Cache Dependencies
+  #     id: cache-deps
+  #     uses: actions/cache@v4.0.2
+  #     with:
+  #       path: |
+  #         dep/msvc/deps-arm64
+  #         dep/msvc/deps-x64
+  #       key: deps ${{ hashFiles('scripts/deps/build-dependencies-windows-arm64.bat', 'scripts/deps/build-dependencies-windows-x64.bat') }}
 
-    - name: Build X64 Dependencies
-      if: steps.cache-deps.outputs.cache-hit != 'true'
-      env:
-        DEBUG: 0
-      run: scripts/deps/build-dependencies-windows-x64.bat
+  #   - name: Build X64 Dependencies
+  #     if: steps.cache-deps.outputs.cache-hit != 'true'
+  #     env:
+  #       DEBUG: 0
+  #     run: scripts/deps/build-dependencies-windows-x64.bat
 
-    - name: Build ARM64 Dependencies
-      if: steps.cache-deps.outputs.cache-hit != 'true'
-      env:
-        DEBUG: 0
-      run: scripts/deps/build-dependencies-windows-arm64.bat
+  #   - name: Build ARM64 Dependencies
+  #     if: steps.cache-deps.outputs.cache-hit != 'true'
+  #     env:
+  #       DEBUG: 0
+  #     run: scripts/deps/build-dependencies-windows-arm64.bat
 
-    - name: Initialize build tag
-      shell: cmd
-      run: |
-        echo #pragma once > src/scmversion/tag.h
+  #   - name: Initialize build tag
+  #     shell: cmd
+  #     run: |
+  #       echo #pragma once > src/scmversion/tag.h
 
-    - name: Tag as preview build
-      if: github.ref == 'refs/heads/master'
-      shell: cmd
-      run: |
-        echo #define SCM_RELEASE_ASSET "duckstation-windows-arm64-release.zip" >> src/scmversion/tag.h
-        echo #define SCM_RELEASE_TAGS {"latest", "preview"} >> src/scmversion/tag.h
-        echo #define SCM_RELEASE_TAG "preview" >> src/scmversion/tag.h
+  #   - name: Tag as preview build
+  #     if: github.ref == 'refs/heads/master'
+  #     shell: cmd
+  #     run: |
+  #       echo #define SCM_RELEASE_ASSET "duckstation-windows-arm64-release.zip" >> src/scmversion/tag.h
+  #       echo #define SCM_RELEASE_TAGS {"latest", "preview"} >> src/scmversion/tag.h
+  #       echo #define SCM_RELEASE_TAG "preview" >> src/scmversion/tag.h
 
-    - name: Tag as dev build
-      if: github.ref == 'refs/heads/dev'
-      shell: cmd
-      run: |
-        echo #define SCM_RELEASE_ASSET "duckstation-windows-arm64-release.zip" >> src/scmversion/tag.h
-        echo #define SCM_RELEASE_TAGS {"latest", "preview"} >> src/scmversion/tag.h
-        echo #define SCM_RELEASE_TAG "latest" >> src/scmversion/tag.h
+  #   - name: Tag as dev build
+  #     if: github.ref == 'refs/heads/dev'
+  #     shell: cmd
+  #     run: |
+  #       echo #define SCM_RELEASE_ASSET "duckstation-windows-arm64-release.zip" >> src/scmversion/tag.h
+  #       echo #define SCM_RELEASE_TAGS {"latest", "preview"} >> src/scmversion/tag.h
+  #       echo #define SCM_RELEASE_TAG "latest" >> src/scmversion/tag.h
 
-    - name: Update RC version fields
-      shell: cmd
-      run: |
-        cd src\scmversion
-        call update_rc_version.bat
-        cd ..\..
-        git update-index --assume-unchanged src/duckstation-qt/duckstation-qt.rc
+  #   - name: Update RC version fields
+  #     shell: cmd
+  #     run: |
+  #       cd src\scmversion
+  #       call update_rc_version.bat
+  #       cd ..\..
+  #       git update-index --assume-unchanged src/duckstation-qt/duckstation-qt.rc
 
-    - name: Compile arm64 release build
-      shell: cmd
-      run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64_arm64
-        msbuild duckstation.sln -t:Build -p:Platform=ARM64;Configuration=ReleaseLTCG-Clang
+  #   - name: Compile arm64 release build
+  #     shell: cmd
+  #     run: |
+  #       call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64_arm64
+  #       msbuild duckstation.sln -t:Build -p:Platform=ARM64;Configuration=ReleaseLTCG-Clang
 
-    - name: Create arm64 symbols archive
-      shell: cmd
-      run: |
-        "C:\Program Files\7-Zip\7z.exe" a -r duckstation-windows-arm64-release-symbols.zip ./bin/ARM64/*.pdb
+  #   - name: Create arm64 symbols archive
+  #     shell: cmd
+  #     run: |
+  #       "C:\Program Files\7-Zip\7z.exe" a -r duckstation-windows-arm64-release-symbols.zip ./bin/ARM64/*.pdb
 
-    - name: Remove extra bloat before archiving
-      shell: cmd
-      run: |
-        del /Q bin\ARM64\*.pdb bin\ARM64\*.exp bin\ARM64\*.lib bin\ARM64\*.iobj bin\ARM64\*.ipdb bin\ARM64\common-tests*
-        rename bin\ARM64\updater-ARM64-ReleaseLTCG.exe updater.exe
+  #   - name: Remove extra bloat before archiving
+  #     shell: cmd
+  #     run: |
+  #       del /Q bin\ARM64\*.pdb bin\ARM64\*.exp bin\ARM64\*.lib bin\ARM64\*.iobj bin\ARM64\*.ipdb bin\ARM64\common-tests*
+  #       rename bin\ARM64\updater-ARM64-ReleaseLTCG.exe updater.exe
 
-    - name: Create arm64 release archive
-      shell: cmd
-      run: |
-        "C:\Program Files\7-Zip\7z.exe" a -r duckstation-windows-arm64-release.zip ./bin/ARM64/*
+  #   - name: Create arm64 release archive
+  #     shell: cmd
+  #     run: |
+  #       "C:\Program Files\7-Zip\7z.exe" a -r duckstation-windows-arm64-release.zip ./bin/ARM64/*
 
-    - name: Upload arm64 release artifact
-      uses: actions/upload-artifact@v4.3.3
-      with:
-        name: "windows-arm64"
-        path: "duckstation-windows-arm64-release*.zip"
+  #   - name: Upload arm64 release artifact
+  #     uses: actions/upload-artifact@v4.3.3
+  #     with:
+  #       name: "windows-arm64"
+  #       path: "duckstation-windows-arm64-release*.zip"
 
 
   linux-build:
@@ -336,72 +336,73 @@ jobs:
         path: "duckstation-x64.flatpak"
 
 
-  macos-build:
-    runs-on: macos-14
-    timeout-minutes: 120
-    steps:
-    - uses: actions/checkout@v4.1.6
-      with:
-        fetch-depth: 0
+  # macos-build:
+  #   runs-on: macos-14
+  #   timeout-minutes: 120
+  #   steps:
+  #   - uses: actions/checkout@v4.1.6
+  #     with:
+  #       fetch-depth: 0
 
-    - name: Use Xcode 15.4
-      run: sudo xcode-select -s /Applications/Xcode_15.4.app
+  #   - name: Use Xcode 15.4
+  #     run: sudo xcode-select -s /Applications/Xcode_15.4.app
 
-    - name: Install packages
-      shell: bash
-      run: |
-        brew install curl ninja
+  #   - name: Install packages
+  #     shell: bash
+  #     run: |
+  #       brew install curl ninja
 
-    - name: Cache Dependencies
-      id: cache-deps-mac
-      uses: actions/cache@v4.0.2
-      with:
-        path: ~/deps
-        key: deps-mac ${{ hashFiles('scripts/deps/build-dependencies-mac.sh') }}
+  #   - name: Cache Dependencies
+  #     id: cache-deps-mac
+  #     uses: actions/cache@v4.0.2
+  #     with:
+  #       path: ~/deps
+  #       key: deps-mac ${{ hashFiles('scripts/deps/build-dependencies-mac.sh') }}
 
-    - name: Build Dependencies
-      if: steps.cache-deps-mac.outputs.cache-hit != 'true'
-      run: scripts/deps/build-dependencies-mac.sh "$HOME/deps"
+  #   - name: Build Dependencies
+  #     if: steps.cache-deps-mac.outputs.cache-hit != 'true'
+  #     run: scripts/deps/build-dependencies-mac.sh "$HOME/deps"
 
-    - name: Initialize build tag
-      run: |
-        echo '#pragma once' > src/scmversion/tag.h
+  #   - name: Initialize build tag
+  #     run: |
+  #       echo '#pragma once' > src/scmversion/tag.h
 
-    - name: Tag as preview build
-      if: github.ref == 'refs/heads/master'
-      run: |
-        echo '#define SCM_RELEASE_ASSET "duckstation-mac-release.zip"' >> src/scmversion/tag.h
-        echo '#define SCM_RELEASE_TAGS {"latest", "preview"}' >> src/scmversion/tag.h
-        echo '#define SCM_RELEASE_TAG "preview"' >> src/scmversion/tag.h
+  #   - name: Tag as preview build
+  #     if: github.ref == 'refs/heads/master'
+  #     run: |
+  #       echo '#define SCM_RELEASE_ASSET "duckstation-mac-release.zip"' >> src/scmversion/tag.h
+  #       echo '#define SCM_RELEASE_TAGS {"latest", "preview"}' >> src/scmversion/tag.h
+  #       echo '#define SCM_RELEASE_TAG "preview"' >> src/scmversion/tag.h
 
-    - name: Tag as dev build
-      if: github.ref == 'refs/heads/dev'
-      run: |
-        echo '#define SCM_RELEASE_ASSET "duckstation-mac-release.zip"' >> src/scmversion/tag.h
-        echo '#define SCM_RELEASE_TAGS {"latest", "preview"}' >> src/scmversion/tag.h
-        echo '#define SCM_RELEASE_TAG "latest"' >> src/scmversion/tag.h
+  #   - name: Tag as dev build
+  #     if: github.ref == 'refs/heads/dev'
+  #     run: |
+  #       echo '#define SCM_RELEASE_ASSET "duckstation-mac-release.zip"' >> src/scmversion/tag.h
+  #       echo '#define SCM_RELEASE_TAGS {"latest", "preview"}' >> src/scmversion/tag.h
+  #       echo '#define SCM_RELEASE_TAG "latest"' >> src/scmversion/tag.h
 
-    - name: Compile and zip .app
-      shell: bash
-      run: |
-        mkdir build
-        cd build
-        export MACOSX_DEPLOYMENT_TARGET=11.0
-        cmake -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENGL=OFF -DCMAKE_PREFIX_PATH="$HOME/deps" -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON -G Ninja ..
-        cmake --build . --parallel
-        mv bin/DuckStation.app .
-        codesign -s - --deep -f -v DuckStation.app
-        zip -r duckstation-mac-release.zip DuckStation.app/
+  #   - name: Compile and zip .app
+  #     shell: bash
+  #     run: |
+  #       mkdir build
+  #       cd build
+  #       export MACOSX_DEPLOYMENT_TARGET=11.0
+  #       cmake -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENGL=OFF -DCMAKE_PREFIX_PATH="$HOME/deps" -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON -G Ninja ..
+  #       cmake --build . --parallel
+  #       mv bin/DuckStation.app .
+  #       codesign -s - --deep -f -v DuckStation.app
+  #       zip -r duckstation-mac-release.zip DuckStation.app/
 
-    - name: Upload macOS .app
-      uses: actions/upload-artifact@v4.3.3
-      with:
-        name: "macos"
-        path: "build/duckstation-mac-release.zip"
+  #   - name: Upload macOS .app
+  #     uses: actions/upload-artifact@v4.3.3
+  #     with:
+  #       name: "macos"
+  #       path: "build/duckstation-mac-release.zip"
 
 
   create-release:
-    needs: [windows-build, windows-arm64-build, linux-build, linux-flatpak-build, macos-build]
+    # needs: [windows-build, windows-arm64-build, linux-build, linux-flatpak-build, macos-build]
+    needs: [linux-build, linux-flatpak-build]
     runs-on: ubuntu-22.04
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev'
     steps:
