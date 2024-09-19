@@ -194,7 +194,7 @@ jobs:
   #       path: "duckstation-windows-arm64-release*.zip"
 
 
-  linux-build:
+  linux-appimage:
     runs-on: ubuntu-22.04
     timeout-minutes: 120
     steps:
@@ -269,71 +269,71 @@ jobs:
         path: "DuckStation-x64.AppImage"
 
 
-  linux-flatpak-build:
-    runs-on: ubuntu-22.04
-    container:
-      image: ghcr.io/flathub-infra/flatpak-github-actions:kde-6.7
-      options: --privileged
-    timeout-minutes: 120
-    steps:
-    - uses: actions/checkout@v4.1.6
-      with:
-        fetch-depth: 0
-        set-safe-directory: ${{ env.GITHUB_WORKSPACE }}
+  # linux-flatpak-build:
+  #   runs-on: ubuntu-22.04
+  #   container:
+  #     image: ghcr.io/flathub-infra/flatpak-github-actions:kde-6.7
+  #     options: --privileged
+  #   timeout-minutes: 120
+  #   steps:
+  #   - uses: actions/checkout@v4.1.6
+  #     with:
+  #       fetch-depth: 0
+  #       set-safe-directory: ${{ env.GITHUB_WORKSPACE }}
 
-    # Work around container ownership issue
-    - name: Set Safe Directory
-      shell: bash
-      run: git config --global --add safe.directory "*"
+  #   # Work around container ownership issue
+  #   - name: Set Safe Directory
+  #     shell: bash
+  #     run: git config --global --add safe.directory "*"
 
-    - name: Initialize build tag
-      run: |
-        echo '#pragma once' > src/scmversion/tag.h
+  #   - name: Initialize build tag
+  #     run: |
+  #       echo '#pragma once' > src/scmversion/tag.h
 
-    - name: Generate AppStream XML
-      run: |
-        scripts/generate-metainfo.sh scripts/flatpak
-        cat scripts/flatpak/org.duckstation.DuckStation.metainfo.xml
+  #   - name: Generate AppStream XML
+  #     run: |
+  #       scripts/generate-metainfo.sh scripts/flatpak
+  #       cat scripts/flatpak/org.duckstation.DuckStation.metainfo.xml
 
-    - name: Validate AppStream XML
-      run: flatpak-builder-lint appstream scripts/flatpak/org.duckstation.DuckStation.metainfo.xml
+  #   - name: Validate AppStream XML
+  #     run: flatpak-builder-lint appstream scripts/flatpak/org.duckstation.DuckStation.metainfo.xml
 
-    - name: Validate manifest
-      run: flatpak-builder-lint manifest scripts/flatpak/org.duckstation.DuckStation.yaml
+  #   - name: Validate manifest
+  #     run: flatpak-builder-lint manifest scripts/flatpak/org.duckstation.DuckStation.yaml
 
-    - name: Build Flatpak
-      uses: flathub-infra/flatpak-github-actions/flatpak-builder@23796715b3dfa4c86ddf50cf29c3cc8b3c82dca8
-      with:
-        bundle: duckstation-x64.flatpak
-        upload-artifact: false
-        manifest-path: scripts/flatpak/org.duckstation.DuckStation.yaml
-        arch: x86_64
-        build-bundle: true
-        verbose: true
-        mirror-screenshots-url: https://dl.flathub.org/media
-        branch: stable
-        cache: true
-        restore-cache: true
-        cache-key: flatpak-x64-${{ hashFiles('scripts/flatpak/**/*.yaml') }}
+  #   - name: Build Flatpak
+  #     uses: flathub-infra/flatpak-github-actions/flatpak-builder@23796715b3dfa4c86ddf50cf29c3cc8b3c82dca8
+  #     with:
+  #       bundle: duckstation-x64.flatpak
+  #       upload-artifact: false
+  #       manifest-path: scripts/flatpak/org.duckstation.DuckStation.yaml
+  #       arch: x86_64
+  #       build-bundle: true
+  #       verbose: true
+  #       mirror-screenshots-url: https://dl.flathub.org/media
+  #       branch: stable
+  #       cache: true
+  #       restore-cache: true
+  #       cache-key: flatpak-x64-${{ hashFiles('scripts/flatpak/**/*.yaml') }}
 
-    - name: Push to Flathub stable
-      if: github.ref == 'refs/heads/dev'
-      uses: flathub-infra/flatpak-github-actions/flat-manager@b6c92176b7f578aedd80cac74cd8f0336f618e89
-      with:
-        flat-manager-url: https://hub.flathub.org/
-        repository: stable
-        token: ${{ secrets.FLATHUB_STABLE_TOKEN }}
-        build-log-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+  #   - name: Push to Flathub stable
+  #     if: github.ref == 'refs/heads/dev'
+  #     uses: flathub-infra/flatpak-github-actions/flat-manager@b6c92176b7f578aedd80cac74cd8f0336f618e89
+  #     with:
+  #       flat-manager-url: https://hub.flathub.org/
+  #       repository: stable
+  #       token: ${{ secrets.FLATHUB_STABLE_TOKEN }}
+  #       build-log-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-    - name: Validate build
-      run: |
-        flatpak-builder-lint repo repo
+  #   - name: Validate build
+  #     run: |
+  #       flatpak-builder-lint repo repo
 
-    - name: Upload Flatpak
-      uses: actions/upload-artifact@v4.3.3
-      with:
-        name: "linux-flatpak"
-        path: "duckstation-x64.flatpak"
+  #   - name: Upload Flatpak
+  #     uses: actions/upload-artifact@v4.3.3
+  #     with:
+  #       name: "linux-flatpak"
+  #       path: "duckstation-x64.flatpak"
 
 
   # macos-build:
@@ -402,9 +402,9 @@ jobs:
 
   create-release:
     # needs: [windows-build, windows-arm64-build, linux-build, linux-flatpak-build, macos-build]
-    needs: [linux-build, linux-flatpak-build]
+    needs: [linux-appimage]
     runs-on: ubuntu-22.04
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     steps:
       - name: Download Artifacts
         uses: actions/download-artifact@v4.1.7
@@ -415,7 +415,7 @@ jobs:
         run: find ./artifacts/
 
       - name: Create preview release
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
@@ -423,13 +423,13 @@ jobs:
           prerelease: true
           title: "Latest Preview Build"
           files: |
-            ./artifacts/windows/duckstation-windows-x64-release.zip
-            ./artifacts/windows/duckstation-windows-x64-release-symbols.zip
-            ./artifacts/windows-arm64/duckstation-windows-arm64-release.zip
-            ./artifacts/windows-arm64/duckstation-windows-arm64-release-symbols.zip
+            # ./artifacts/windows/duckstation-windows-x64-release.zip
+            # ./artifacts/windows/duckstation-windows-x64-release-symbols.zip
+            # ./artifacts/windows-arm64/duckstation-windows-arm64-release.zip
+            # ./artifacts/windows-arm64/duckstation-windows-arm64-release-symbols.zip
             ./artifacts/linux-x64-appimage-qt/DuckStation-x64.AppImage
-            ./artifacts/linux-flatpak/duckstation-x64.flatpak
-            ./artifacts/macos/duckstation-mac-release.zip
+            # ./artifacts/linux-flatpak/duckstation-x64.flatpak
+            # ./artifacts/macos/duckstation-mac-release.zip
 
       - name: Create dev release
         if: github.ref == 'refs/heads/dev'
@@ -440,11 +440,11 @@ jobs:
           prerelease: false
           title: "Latest Rolling Release"
           files: |
-            ./artifacts/windows/duckstation-windows-x64-release.zip
-            ./artifacts/windows/duckstation-windows-x64-release-symbols.zip
-            ./artifacts/windows-arm64/duckstation-windows-arm64-release.zip
-            ./artifacts/windows-arm64/duckstation-windows-arm64-release-symbols.zip
+            # ./artifacts/windows/duckstation-windows-x64-release.zip
+            # ./artifacts/windows/duckstation-windows-x64-release-symbols.zip
+            # ./artifacts/windows-arm64/duckstation-windows-arm64-release.zip
+            # ./artifacts/windows-arm64/duckstation-windows-arm64-release-symbols.zip
             ./artifacts/linux-x64-appimage-qt/DuckStation-x64.AppImage
-            ./artifacts/linux-flatpak/duckstation-x64.flatpak
-            ./artifacts/macos/duckstation-mac-release.zip
+            # ./artifacts/linux-flatpak/duckstation-x64.flatpak
+            # ./artifacts/macos/duckstation-mac-release.zip
 
