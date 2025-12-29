@@ -1,11 +1,9 @@
-# DuckStation - (Legacy)
+# DuckStation (Legacy)
 
-Note: Legacy Emulator
+**Note:** Legacy Emulator
 
-Duckstation is a Playstation 1 - PSX Emulator.
+DuckStation is a PlayStation 1 (PSX) emulator.
 
-As of RetroDECK 0.9.0b Duckstation have made licensing changes and is marked as Legacy.
+As of RetroDECK 0.9.0b, DuckStation has undergone licensing changes and is therefore classified as **Legacy**. It no longer receives updates and is provided in its current, as-is state.
 
-It will no longer receive any updates and is working as-is. 
-
-This is an archive. 
+This repository serves as an archive.
